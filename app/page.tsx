@@ -1,17 +1,38 @@
 "use client";
+import { useSvgLoader } from "@/lib/useSVG";
 // import Component from "@/components/vercel-logo-particles";
 // import Image from "next/image";
-import { GLBViewer } from "../components/3D";
+import ModelPreview from "../components/3D";
 
 export default function Home() {
+  const { svgData, loading, error } = useSvgLoader("/dmx.svg");
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
   return (
-    <div className="h-screen w-full">
-      <GLBViewer
-        modelUrl="/glbs.glb"
+    <div className="w-full h-screen">
+      <ModelPreview
+        svgData={svgData}
+        // 🔷 BEVEL: NONE
+        bevelEnabled={false}
+        // ⚫ OVERRIDE SVG COLOR WITH BLACK
+        useCustomColor={true}
+        // ✨ METALLIC MATERIAL WITH ENVIRONMENTAL LIGHTING
+        metalness={1} // More balanced metallic
+        roughness={0.3} // Softer, diffused reflections
+        envMapIntensity={1.0} // Gentler environment influence
+        clearcoat={1} // No clearcoat = no extra shine
+        customColor="#1a1a1a"
+        // 🌅 DAWN ENVIRONMENT = ENVIRONMENTAL LIGHTING SOURCE
+        useEnvironment={true} // 🔥 This enables environmental lighting
+        environmentPreset="dawn" // Dawn sky provides lighting + reflections
+        backgroundColor="#000000" // Black background (env lighting still works)
+        // 🔄 ROTATION
         autoRotate={true}
-        enableControls={true}
-        cameraPosition={[50, 25, 50]}
-        onLoad={() => console.log("Loaded!")}
+        autoRotateSpeed={0.3}
+        // 📐 GEOMETRY
+        depth={15}
       />
     </div>
     // <Component />
