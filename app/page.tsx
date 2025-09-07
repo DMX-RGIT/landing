@@ -1,9 +1,20 @@
+"use client";
 import Component from "@/components/vercel-logo-particles";
 import Image from "next/image";
+import { GLBViewer } from "../components/3D";
 
 export default function Home() {
   return (
-    <Component />
+    <div className="h-screen w-full">
+      <GLBViewer
+        modelUrl="/glbs.glb"
+        autoRotate={true}
+        enableControls={true}
+        cameraPosition={[50, 25, 50]}
+        onLoad={() => console.log("Loaded!")}
+      />
+    </div>
+    // <Component />
 
     // <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
     //   <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
