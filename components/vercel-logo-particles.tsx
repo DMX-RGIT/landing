@@ -47,12 +47,12 @@ export default function Component() {
 
       const logoHeight = isMobile ? 60 : 120;
       const vercelLogoWidth = logoHeight * (40 / 19.7762); // Maintain aspect ratio
-      const awsLogoWidth = logoHeight * (28 / 14); // Maintain aspect ratio
+      const awsLogoWidth = logoHeight * (283 / 140); // Maintain aspect ratio
       const logoSpacing = isMobile ? 30 : 60; // Increased gap for mobile and desktop
       const totalWidth = vercelLogoWidth + awsLogoWidth + logoSpacing;
 
       ctx.translate(
-        canvas.width / 2 - totalWidth / 2,
+        canvas.width / 3 - totalWidth / 2,
         canvas.height / 2 - logoHeight / 2
       );
 
@@ -99,9 +99,8 @@ export default function Component() {
 
       // Draw AWS logo
       ctx.save();
-      // Move AWS logo up by 20px (adjust as needed)
-      ctx.translate(vercelLogoWidth + logoSpacing, -160);
-      const awsScale = logoHeight / 250;
+      ctx.translate(vercelLogoWidth + logoSpacing, -90);
+      const awsScale = logoHeight / 240;
       ctx.scale(awsScale, awsScale);
       const path = new Path2D(DMX_PATH);
       ctx.fill(path);

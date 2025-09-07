@@ -13,5 +13,5 @@ export function extractJoinedPathFromSVGFile(filePath: string): string {
   return matches.map((m) => m[1].trim()).join(" ");
 }
 
-const result = extractJoinedPathFromSVGFile("public/file.svg");
+const result = extractJoinedPathFromSVGFile("./public/file.svg");
 console.log(result);
