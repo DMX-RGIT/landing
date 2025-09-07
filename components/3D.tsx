@@ -118,8 +118,8 @@ const SVGModel: React.FC<{
         }
 
         // Calculate overall bounding box for centering the entire SVG
-        let globalBoundingBox = new THREE.Box3();
-        let tempGeometries: THREE.ExtrudeGeometry[] = [];
+        const globalBoundingBox = new THREE.Box3();
+        const tempGeometries: THREE.ExtrudeGeometry[] = [];
 
         // First pass: create all geometries and calculate global bounds
         for (let i = 0; i < paths.length; i++) {
@@ -403,7 +403,9 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
             near: 1,
             far: 2000, // Increased far plane
           }}
-          dpr={window?.devicePixelRatio || 1.5}
+          dpr={
+            typeof window !== "undefined" ? window.devicePixelRatio || 1.5 : 1.5
+          }
           frameloop="demand"
           performance={{ min: 0.5 }}
           gl={{
