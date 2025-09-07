@@ -1,7 +1,8 @@
+"use client";
 import React, { useRef, Suspense, useEffect, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment, useTexture } from "@react-three/drei";
-import { SVGModel } from "@/components/svg-model"; // You'll need this component
+import { SVGLoader } from "three/addons/loaders/SVGLoader.js";
 import * as THREE from "three";
 import {
   EffectComposer,
@@ -57,8 +58,182 @@ function SimpleEnvironment({
   );
 }
 
+// SVG Model component using Three.js SVGLoader
+const SVGModel: React.FC<{
+  svgPath: string;
+  depth: number;
+  useCustomColor: boolean;
+  customColor: string;
+  metalness: number;
+  roughness: number;
+  clearcoat: number;
+  transmission: number;
+  envMapIntensity: number;
+  bevelEnabled: boolean;
+  bevelThickness: number;
+  bevelSize: number;
+  bevelSegments: number;
+  enableEnvShine?: boolean;
+}> = ({
+  svgPath,
+  depth,
+  useCustomColor,
+  customColor,
+  metalness,
+  roughness,
+  clearcoat,
+  transmission,
+  envMapIntensity,
+  bevelEnabled,
+  bevelThickness,
+  bevelSize,
+  bevelSegments,
+  enableEnvShine = false,
+}) => {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useEffect(() => {
+    if (!groupRef.current) return;
+
+    const loader = new SVGLoader();
+
+    loader.load(
+      svgPath,
+      (data) => {
+        const paths = data.paths;
+        const group = groupRef.current;
+
+        if (!group) return;
+
+        // Clear previous geometry
+        while (group.children.length) {
+          const child = group.children[0];
+          group.remove(child);
+          if (child instanceof THREE.Mesh) {
+            child.geometry.dispose();
+            if (child.material instanceof THREE.Material) {
+              child.material.dispose();
+            }
+          }
+        }
+
+        // Calculate overall bounding box for centering the entire SVG
+        let globalBoundingBox = new THREE.Box3();
+        let tempGeometries: THREE.ExtrudeGeometry[] = [];
+
+        // First pass: create all geometries and calculate global bounds
+        for (let i = 0; i < paths.length; i++) {
+          const path = paths[i];
+          const shapes = SVGLoader.createShapes(path);
+
+          for (let j = 0; j < shapes.length; j++) {
+            const shape = shapes[j];
+
+            const extrudeSettings = {
+              depth: depth,
+              bevelEnabled: bevelEnabled,
+              bevelThickness: bevelThickness,
+              bevelSize: bevelSize,
+              bevelSegments: bevelSegments,
+            };
+
+            const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            geometry.computeBoundingBox();
+
+            if (geometry.boundingBox) {
+              globalBoundingBox.union(geometry.boundingBox);
+            }
+
+            tempGeometries.push(geometry);
+          }
+        }
+
+        // Calculate global center
+        const globalCenter = new THREE.Vector3();
+        globalBoundingBox.getCenter(globalCenter);
+
+        // Second pass: create meshes with proper positioning
+        let geometryIndex = 0;
+        for (let i = 0; i < paths.length; i++) {
+          const path = paths[i];
+          const shapes = SVGLoader.createShapes(path);
+
+          for (let j = 0; j < shapes.length; j++) {
+            const geometry = tempGeometries[geometryIndex];
+
+            // Only translate by global center to keep letters in their relative positions
+            geometry.translate(
+              -globalCenter.x,
+              -globalCenter.y,
+              -globalCenter.z
+            );
+
+            // Create material
+            const material = new THREE.MeshPhysicalMaterial({
+              color: useCustomColor ? customColor : path.color || "#ffffff",
+              metalness: metalness,
+              roughness: roughness,
+              clearcoat: clearcoat,
+              transmission: transmission,
+              envMapIntensity: enableEnvShine
+                ? Math.max(envMapIntensity, 2)
+                : envMapIntensity,
+              reflectivity: enableEnvShine ? 1 : 0.5,
+              side: THREE.DoubleSide,
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            // Fix vertical flip
+            mesh.scale.y = -1;
+
+            group.add(mesh);
+            geometryIndex++;
+          }
+        }
+      },
+      (progress) => {
+        console.log("SVG loading progress:", progress);
+      },
+      (error) => {
+        console.error("SVG loading error:", error);
+      }
+    );
+
+    return () => {
+      // Cleanup on unmount
+      if (groupRef.current) {
+        groupRef.current.children.forEach((child) => {
+          if (child instanceof THREE.Mesh) {
+            if (child.material instanceof THREE.Material) {
+              child.material.dispose();
+            }
+          }
+        });
+      }
+    };
+  }, [
+    svgPath,
+    depth,
+    useCustomColor,
+    customColor,
+    metalness,
+    roughness,
+    clearcoat,
+    transmission,
+    envMapIntensity,
+    bevelEnabled,
+    bevelThickness,
+    bevelSize,
+    bevelSegments,
+  ]);
+
+  return <group ref={groupRef} />;
+};
+
 interface ModelPreviewProps {
-  svgData: string;
+  svgPath: string;
   depth?: number;
   modelRotationY?: number;
   // Geometry settings
@@ -76,6 +251,7 @@ interface ModelPreviewProps {
   clearcoat?: number;
   transmission?: number;
   envMapIntensity?: number;
+  enableEnvShine?: boolean;
   // Environment settings
   backgroundColor?: string;
   useEnvironment?: boolean;
@@ -89,11 +265,15 @@ interface ModelPreviewProps {
   bloomMipmapBlur?: boolean;
   isMobile?: boolean;
   className?: string;
+  // Camera distance controls
+  cameraDistance?: number;
+  minDistance?: number;
+  maxDistance?: number;
 }
 
 export const ModelPreview = React.memo<ModelPreviewProps>(
   ({
-    svgData,
+    svgPath,
     depth = 10,
     modelRotationY = 0,
     // Geometry settings
@@ -111,6 +291,7 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
     clearcoat = 0,
     transmission = 0,
     envMapIntensity = 1,
+    enableEnvShine = false,
     // Environment settings
     backgroundColor = "#000000",
     useEnvironment = true,
@@ -124,31 +305,38 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
     bloomMipmapBlur = true,
     isMobile = false,
     className = "",
+    // Camera distance controls - UPDATED FOR FARTHER VIEW
+    cameraDistance = 300, // Increased from 150
+    minDistance = 100, // Increased from 50
+    maxDistance = 800, // Increased from 400
   }) => {
-    const modelRef = useRef<THREE.Group | null>(null);
     const modelGroupRef = useRef<THREE.Group | null>(null);
 
+    // Use default aspect ratio for SSR, update on client
     const cameraRef = useRef(
       new THREE.PerspectiveCamera(
         50,
-        window.innerWidth / window.innerHeight,
+        1.5, // Default aspect ratio for SSR
         1,
-        1000
+        2000 // Increased far plane to accommodate farther distances
       )
     );
 
     useEffect(() => {
       const handleResize = () => {
-        if (cameraRef.current) {
+        if (cameraRef.current && typeof window !== "undefined") {
           cameraRef.current.aspect = window.innerWidth / window.innerHeight;
           cameraRef.current.updateProjectionMatrix();
         }
       };
-
-      window.addEventListener("resize", handleResize);
-      return () => {
-        window.removeEventListener("resize", handleResize);
-      };
+      if (typeof window !== "undefined") {
+        cameraRef.current.aspect = window.innerWidth / window.innerHeight;
+        cameraRef.current.updateProjectionMatrix();
+        window.addEventListener("resize", handleResize);
+        return () => {
+          window.removeEventListener("resize", handleResize);
+        };
+      }
     }, []);
 
     const effects = useMemo(() => {
@@ -203,13 +391,18 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
       );
     }, [useEnvironment, environmentPreset, customHdriUrl]);
 
-    if (!svgData) return null;
+    if (!svgPath) return null;
 
     return (
       <div className={`w-full h-full ${className}`}>
         <Canvas
           shadows
-          camera={{ position: [0, 0, 150], fov: 50 }}
+          camera={{
+            position: [0, 0, cameraDistance], // Use configurable distance
+            fov: 50,
+            near: 1,
+            far: 2000, // Increased far plane
+          }}
           dpr={window?.devicePixelRatio || 1.5}
           frameloop="demand"
           performance={{ min: 0.5 }}
@@ -238,11 +431,11 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
           <Suspense fallback={null}>
             <color attach="background" args={[backgroundColor]} />
 
-            <ambientLight intensity={0.6 * Math.PI} />
+            <ambientLight intensity={0.7 * Math.PI} />
 
             <directionalLight
               position={[50, 50, 100]}
-              intensity={0.8 * Math.PI}
+              intensity={0.9 * Math.PI}
               castShadow={false}
             />
 
@@ -250,23 +443,20 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
 
             <group ref={modelGroupRef} rotation={[0, modelRotationY, 0]}>
               <SVGModel
-                svgData={svgData}
-                depth={depth * 5}
+                svgPath={svgPath}
+                depth={depth}
+                useCustomColor={useCustomColor}
+                customColor={customColor}
+                metalness={metalness}
+                roughness={roughness}
+                clearcoat={clearcoat}
+                transmission={transmission}
+                envMapIntensity={envMapIntensity}
                 bevelEnabled={bevelEnabled}
                 bevelThickness={bevelThickness}
                 bevelSize={bevelSize}
-                bevelSegments={isMobile ? 3 : bevelSegments}
-                customColor={useCustomColor ? customColor : undefined}
-                roughness={roughness}
-                metalness={metalness}
-                clearcoat={clearcoat}
-                transmission={transmission}
-                envMapIntensity={useEnvironment ? envMapIntensity : 0.2}
-                receiveShadow={false}
-                castShadow={false}
-                isHollowSvg={isHollowSvg}
-                spread={spread}
-                ref={modelRef}
+                bevelSegments={bevelSegments}
+                enableEnvShine={enableEnvShine}
               />
             </group>
           </Suspense>
@@ -276,8 +466,8 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
           <OrbitControls
             autoRotate={autoRotate}
             autoRotateSpeed={autoRotateSpeed}
-            minDistance={50}
-            maxDistance={400}
+            minDistance={minDistance} // Use configurable min distance
+            maxDistance={maxDistance} // Use configurable max distance
             enablePan={true}
             enableZoom={true}
             enableRotate={true}
@@ -291,126 +481,36 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
 
 ModelPreview.displayName = "ModelPreview";
 
-// Hook to load SVG from public directory
-export const useSvgLoader = (svgPath: string) => {
-  const [svgData, setSvgData] = React.useState<string>("");
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [error, setError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (!svgPath) return;
-
-    const loadSvg = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await fetch(svgPath);
-        if (!response.ok) {
-          throw new Error(`Failed to load SVG: ${response.status}`);
-        }
-
-        const svgContent = await response.text();
-        setSvgData(svgContent);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load SVG");
-        console.error("Error loading SVG:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSvg();
-  }, [svgPath]);
-
-  return { svgData, loading, error };
-};
-
-// Loading component
-const LoadingSpinner: React.FC = () => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-      <p className="text-white">Loading SVG...</p>
-    </div>
-  </div>
-);
-
-// Error component
-const ErrorDisplay: React.FC<{ error: string }> = ({ error }) => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div className="text-center text-red-400">
-      <p className="mb-2">Failed to load SVG</p>
-      <p className="text-sm opacity-75">{error}</p>
-    </div>
-  </div>
-);
-
-// Usage example with enhanced environmental lighting
+// Updated usage example with farther camera
 export const ExampleUsage: React.FC = () => {
-  // Load SVG from public directory
-  const { svgData, loading, error } = useSvgLoader("/your-svg-file.svg");
-
-  if (loading) {
-    return (
-      <div className="w-full h-screen">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full h-screen">
-        <ErrorDisplay error={error} />
-      </div>
-    );
-  }
-
   return (
     <div className="w-full h-screen">
       <ModelPreview
-        svgData={svgData}
-        // 🔷 BEVEL: NONE
+        svgPath="/your-svg-file.svg"
+        // 📷 CAMERA DISTANCE - Much farther back
+        cameraDistance={400} // Default was 150, now 400
+        minDistance={150} // Default was 50, now 150
+        maxDistance={1000} // Default was 400, now 1000
+        // Geometry settings
         bevelEnabled={false}
-        // ⚫ OVERRIDE SVG COLOR WITH BLACK
+        depth={15}
+        // Material settings for soft metallic look
         useCustomColor={true}
-        customColor="#000000"
-        // ✨ METALLIC MATERIAL WITH ENVIRONMENTAL LIGHTING
-        metalness={0.9} // High metallic for better env reflections
-        roughness={0.1} // Shiny finish reflects environment clearly
-        envMapIntensity={2.0} // 🔥 STRONGER environmental lighting influence
-        clearcoat={0.3} // Extra shine for env reflections
-        // 🌅 DAWN ENVIRONMENT = ENVIRONMENTAL LIGHTING SOURCE
-        useEnvironment={true} // 🔥 This enables environmental lighting
-        environmentPreset="dawn" // Dawn sky provides lighting + reflections
-        backgroundColor="#000000" // Black background (env lighting still works)
-        // 🔄 ROTATION
+        customColor="#1a1a1a"
+        metalness={0.7}
+        roughness={0.4}
+        envMapIntensity={1.0}
+        clearcoat={0.0}
+        // Environment
+        useEnvironment={true}
+        environmentPreset="dawn"
+        backgroundColor="#000000"
+        // Animation
         autoRotate={true}
         autoRotateSpeed={0.3}
-        // 📐 GEOMETRY
-        depth={15}
       />
     </div>
   );
-};
-
-// Alternative: Direct component that loads SVG
-interface SVGModelViewerProps extends Omit<ModelPreviewProps, "svgData"> {
-  svgPath: string;
-}
-
-export const SVGModelViewer: React.FC<SVGModelViewerProps> = ({
-  svgPath,
-  ...modelProps
-}) => {
-  const { svgData, loading, error } = useSvgLoader(svgPath);
-
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorDisplay error={error} />;
-  if (!svgData) return null;
-
-  return <ModelPreview svgData={svgData} {...modelProps} />;
 };
 
 export default ModelPreview;

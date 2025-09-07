@@ -1,40 +1,10 @@
-// import Component from "@/components/vercel-logo-particles";
+"use client";
+import Component from "@/components/vercel-logo-particles";
 // import Image from "next/image";
-import ModelPreview from "../components/3D";
 
 export default function Home() {
   return (
-    <div className="w-full h-screen">
-      <ModelPreview
-        cameraDistance={500}
-        minDistance={200}
-        maxDistance={1200}
-        svgPath="/dmx.svg" // Direct path to SVG file
-        // Geometry settings
-        bevelEnabled={false}
-        depth={15}
-        // Material settings for soft metallic look
-        useCustomColor={true}
-        customColor="#1a1a1a"
-        metalness={0.9}
-        roughness={0.1}
-        envMapIntensity={1.0}
-        clearcoat={0.0}
-        // Environment
-        enableEnvShine={true}
-        useEnvironment={true}
-        environmentPreset="dawn"
-        backgroundColor="#000000"
-        // Shine
-        useBloom={true}
-        bloomIntensity={1}
-        // Animation
-        autoRotate={true}
-        autoRotateSpeed={0.3}
-        // Geometry settings
-      />
-    </div>
-    // <Component />
+    <Component />
 
     // <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
     //   <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">

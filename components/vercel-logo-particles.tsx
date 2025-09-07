@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 // import Link from "next/link";
-import { AWS_LOGO_PATH } from "../aws-logo-path";
+import { DMX_PATH } from "../aws-logo-path";
 
 export default function Component() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,7 +47,7 @@ export default function Component() {
 
       const logoHeight = isMobile ? 60 : 120;
       const vercelLogoWidth = logoHeight * (40 / 19.7762); // Maintain aspect ratio
-      const awsLogoWidth = logoHeight * (283 / 140); // Maintain aspect ratio
+      const awsLogoWidth = logoHeight * (28 / 14); // Maintain aspect ratio
       const logoSpacing = isMobile ? 30 : 60; // Increased gap for mobile and desktop
       const totalWidth = vercelLogoWidth + awsLogoWidth + logoSpacing;
 
@@ -99,10 +99,11 @@ export default function Component() {
 
       // Draw AWS logo
       ctx.save();
-      ctx.translate(vercelLogoWidth + logoSpacing, 0);
-      const awsScale = logoHeight / 140;
+      // Move AWS logo up by 20px (adjust as needed)
+      ctx.translate(vercelLogoWidth + logoSpacing, -160);
+      const awsScale = logoHeight / 250;
       ctx.scale(awsScale, awsScale);
-      const path = new Path2D(AWS_LOGO_PATH);
+      const path = new Path2D(DMX_PATH);
       ctx.fill(path);
       ctx.restore();
 
