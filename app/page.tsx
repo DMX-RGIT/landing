@@ -1,6 +1,6 @@
 "use client";
-import Component from "@/components/vercel-logo-particles";
-import Image from "next/image";
+// import Component from "@/components/vercel-logo-particles";
+// import Image from "next/image";
 import { GLBViewer } from "../components/3D";
 
 export default function Home() {

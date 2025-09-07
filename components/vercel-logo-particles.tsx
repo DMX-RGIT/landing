@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import Link from "next/link";
+// import Link from "next/link";
 import { AWS_LOGO_PATH } from "../aws-logo-path";
 
 export default function Component() {

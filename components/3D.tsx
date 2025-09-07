@@ -6,7 +6,7 @@ import {
   useGLTF,
   Environment,
   ContactShadows,
-  PresentationControls,
+  // PresentationControls,
 } from "@react-three/drei";
 import * as THREE from "three";
 
