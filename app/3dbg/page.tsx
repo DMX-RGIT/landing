@@ -1,5 +1,5 @@
 import FadeIn from "@/components/fadeIn";
-import ModelPreview from "../components/3D";
+import ModelPreview from "@/components/3D";
 import { NavBar } from "@/components/navbar";
 import { Meteors } from "@/components/ui/meteors";
 import { SparklesCore } from "@/components/ui/sparkles";
@@ -13,7 +13,7 @@ export default function Home() {
       <div className="w-full relative inset-0 h-screen">
         <Meteors number={20} />
         <FadeIn delay={0}>
-          <div className="absolute inset-0 bg-[url('/gol.jpg')] bg-cover bg-center opacity-0"></div>
+          <div className="absolute inset-0 bg-[url('/gol.jpg')] bg-cover bg-center opacity-20"></div>
         </FadeIn>
         <FadeIn>
           <SparklesCore
