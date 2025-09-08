@@ -1,14 +1,34 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
-// import Link from "next/link";
-import { DMX_PATH } from "../aws-logo-path";
+import { useRef, useEffect, useState } from "react";
+import { DMX_PATH } from "@/aws-logo-path";
+import { BookOpenIcon, BriefcaseIcon, HomeIcon } from "lucide-react";
+import Header from "./navbar";
 
 export default function Component() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const isTouchingRef = useRef(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [index, setIndex] = useState(0);
+
+  const headers = [
+    {
+      title: "Home",
+      icon: <HomeIcon className="h-6 w-6" />,
+      onClick: (index: number) => setIndex(index),
+    },
+    {
+      title: "Blogs",
+      icon: <BookOpenIcon className="h-6 w-6" />,
+      onClick: (index: number) => setIndex(index),
+    },
+    {
+      title: "Works",
+      icon: <BriefcaseIcon className="h-6 w-6" />,
+      onClick: (index: number) => setIndex(index),
+    },
+  ];
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -34,7 +54,6 @@ export default function Component() {
       color: string;
       scatteredColor: string;
       life: number;
-      isAWS: boolean;
     }[] = [];
 
     let textImageData: ImageData | null = null;
@@ -46,61 +65,15 @@ export default function Component() {
       ctx.save();
 
       const logoHeight = isMobile ? 60 : 120;
-      const vercelLogoWidth = logoHeight * (40 / 19.7762); // Maintain aspect ratio
       const awsLogoWidth = logoHeight * (283 / 140); // Maintain aspect ratio
-      const logoSpacing = isMobile ? 30 : 60; // Increased gap for mobile and desktop
-      const totalWidth = vercelLogoWidth + awsLogoWidth + logoSpacing;
 
       ctx.translate(
-        canvas.width / 3 - totalWidth / 2,
-        canvas.height / 2 - logoHeight / 2
+        canvas.width / 2 - awsLogoWidth / 0.56,
+        canvas.height / 2 - logoHeight * 3.5
       );
 
-      // Draw Vercel logo
       ctx.save();
-      const vercelScale = logoHeight / 19.7762;
-      ctx.scale(vercelScale, vercelScale);
-      ctx.beginPath();
-      ctx.moveTo(23.3919, 0);
-      ctx.lineTo(32.9188, 0);
-      ctx.bezierCurveTo(36.7819, 0, 39.9136, 3.13165, 39.9136, 6.99475);
-      ctx.lineTo(39.9136, 16.0805);
-      ctx.lineTo(36.0006, 16.0805);
-      ctx.lineTo(36.0006, 6.99475);
-      ctx.bezierCurveTo(36.0006, 6.90167, 35.9969, 6.80925, 35.9898, 6.71766);
-      ctx.lineTo(26.4628, 16.079);
-      ctx.bezierCurveTo(26.4949, 16.08, 26.5272, 16.0805, 26.5595, 16.0805);
-      ctx.lineTo(36.0006, 16.0805);
-      ctx.lineTo(36.0006, 19.7762);
-      ctx.lineTo(26.5595, 19.7762);
-      ctx.bezierCurveTo(22.6964, 19.7762, 19.4788, 16.6139, 19.4788, 12.7508);
-      ctx.lineTo(19.4788, 3.68923);
-      ctx.lineTo(23.3919, 3.68923);
-      ctx.lineTo(23.3919, 12.7508);
-      ctx.bezierCurveTo(23.3919, 12.9253, 23.4054, 13.0977, 23.4316, 13.2668);
-      ctx.lineTo(33.1682, 3.6995);
-      ctx.bezierCurveTo(33.0861, 3.6927, 33.003, 3.68923, 32.9188, 3.68923);
-      ctx.lineTo(23.3919, 3.68923);
-      ctx.lineTo(23.3919, 0);
-      ctx.closePath();
-
-      ctx.moveTo(13.7688, 19.0956);
-      ctx.lineTo(0, 3.68759);
-      ctx.lineTo(5.53933, 3.68759);
-      ctx.lineTo(13.6231, 12.7337);
-      ctx.lineTo(13.6231, 3.68759);
-      ctx.lineTo(17.7535, 3.68759);
-      ctx.lineTo(17.7535, 17.5746);
-      ctx.bezierCurveTo(17.7535, 19.6705, 15.1654, 20.6584, 13.7688, 19.0956);
-      ctx.closePath();
-
-      ctx.fill();
-      ctx.restore();
-
-      // Draw AWS logo
-      ctx.save();
-      ctx.translate(vercelLogoWidth + logoSpacing, -90);
-      const awsScale = logoHeight / 240;
+      const awsScale = logoHeight / 140;
       ctx.scale(awsScale, awsScale);
       const path = new Path2D(DMX_PATH);
       ctx.fill(path);
@@ -111,7 +84,7 @@ export default function Component() {
       textImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      return Math.max(vercelScale, awsScale);
+      return awsScale;
     }
 
     function createParticle(scale: number) {
@@ -125,14 +98,6 @@ export default function Component() {
         const y = Math.floor(Math.random() * canvas.height);
 
         if (data[(y * canvas.width + x) * 4 + 3] > 128) {
-          const logoHeight = isMobile ? 60 : 120;
-          const vercelLogoWidth = logoHeight * (40 / 19.7762);
-          const awsLogoWidth = logoHeight * (283 / 140);
-          const logoSpacing = isMobile ? 30 : 60;
-          const totalWidth = vercelLogoWidth + awsLogoWidth + logoSpacing;
-          const centerX = canvas.width / 2;
-          const centerY = canvas.height / 2;
-          const isAWSLogo = x >= centerX + totalWidth / 2 - awsLogoWidth;
           return {
             x: x,
             y: y,
@@ -140,8 +105,7 @@ export default function Component() {
             baseY: y,
             size: Math.random() * 1 + 0.5,
             color: "white",
-            scatteredColor: isAWSLogo ? "#FF9900" : "#00DCFF",
-            isAWS: isAWSLogo,
+            scatteredColor: "#FF9900", // AWS orange color
             life: Math.random() * 100 + 50,
           };
         }
@@ -168,9 +132,7 @@ export default function Component() {
 
     function animate(scale: number) {
       if (!ctx || !canvas) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Only clear, do not fill for transparency
 
       const { x: mouseX, y: mouseY } = mousePositionRef.current;
       const maxDistance = 240;
@@ -286,11 +248,23 @@ export default function Component() {
   }, [isMobile]);
 
   return (
-    <div className="relative w-full h-dvh flex flex-col items-center justify-center bg-black">
+    <div className="relative w-full h-dvh flex flex-col items-center justify-center">
+      <div className=" absolute z-10 top-10">
+        <Header links={headers} activeIndex={index} />
+      </div>
+      <video
+        className="absolute top-0 left-0 w-full h-full object-cover z-0"
+        src="/gradient.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        aria-label="Background gradient video"
+      />
       <canvas
         ref={canvasRef}
-        className="w-full h-full absolute top-0 left-0 touch-none"
-        aria-label="Interactive particle effect with Vercel and AWS logos"
+        className="w-full h-full absolute top-0 left-0 touch-none "
+        aria-label="Interactive particle effect with AWS logo"
       />
       <div className="absolute bottom-[100px] text-center z-10">
         <p className="font-mono text-gray-400 text-xs sm:text-base md:text-sm ">
@@ -299,6 +273,7 @@ export default function Component() {
             href="https://vercel.fyi/v0-reinvent"
             target="_blank"
             className="invite-link text-gray-300 hover:text-cyan-400 transition-colors duration-300"
+            rel="noreferrer"
           >
             v0 Happy Hour
           </a>{" "}
@@ -312,6 +287,7 @@ export default function Component() {
             href="https://v0.dev/chat/RqstUbkUVcB?b=b_BoU5qmQ0ehp"
             className="text-gray-500 text-xs mt-2.5 inline-block"
             target="_blank"
+            rel="noreferrer"
           >
             (fork this v0)
           </a>
