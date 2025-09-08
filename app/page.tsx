@@ -1,20 +1,23 @@
-import { SparklesCore } from "@/components/ui/sparkles";
 import ModelPreview from "../components/3D";
 import { NavBar } from "@/components/navbar";
+import { Meteors } from "@/components/ui/meteors";
+import { SparklesCore } from "@/components/ui/sparkles";
 
 export default function Home() {
   return (
     <div className="w-full h-screen bg-gray-950">
       <NavBar />
-      <div className="w-full absolute inset-0 h-screen">
+      <div className="w-full relative inset-0 h-screen">
+        <Meteors number={20} />
+        <div className="absolute inset-0 bg-[url('/gol.jpg')] bg-cover bg-center opacity-20"></div>
         <SparklesCore
           id="tsparticlesfullpage"
-          background="transparent"
+          background="green"
           minSize={0.9}
           maxSize={1.4}
           speed={0.025}
           particleDensity={90}
-          className="w-full h-full"
+          className="absolute inset-0"
           particleColor="#FFFFFF"
         />
       </div>
@@ -45,6 +48,7 @@ export default function Home() {
         autoRotateSpeed={0.15}
         // Geometry settings
       />
+      <div />
     </div>
   );
 }
