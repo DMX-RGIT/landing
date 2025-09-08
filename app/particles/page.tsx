@@ -1,5 +1,5 @@
 "use client";
-import Component from "@/components/vercel-logo-particles";
+import Component from "@/components/logo-particles";
 // import Image from "next/image";
 
 export default function Home() {

@@ -1,112 +1,31 @@
-import { cn } from "@/lib/utils";
-import { motion, Transition } from "motion/react";
-import React from "react";
-import { useCallback, useEffect, useMemo } from "react";
+"use client";
+import { HomeIcon, BookOpenIcon, BriefcaseIcon } from "lucide-react";
+import { useState } from "react";
+import Header from "./ui/header";
 
-const getBorderRadius = (index: number, links: Links[]) => {
-  return index === 0
-    ? "500px 120px 120px 500px"
-    : index === links.length - 1
-    ? "120px 500px 500px 120px"
-    : "500px 500px 500px 500px";
-};
+export const NavBar = () => {
+  const [index, setIndex] = useState(0);
 
-export interface Links
-  extends Omit<React.HTMLAttributes<HTMLButtonElement>, "onClick"> {
-  title: string;
-  icon: React.ReactNode;
-  onClick: (activeIndex: number) => void;
-}
-
-interface HeaderProps {
-  links: Links[];
-  activeIndex: number;
-  config?: Transition;
-}
-
-const Header = ({ links, activeIndex = 0, config }: HeaderProps) => {
-  const headerConfig = useMemo(
-    () => ({
-      type: "spring" as const,
-      damping: 20,
-      mass: 1,
-      stiffness: 400,
-      ...(config ? config : {}),
-    }),
-    [config]
-  );
-
-  const pillCoordinates = useCallback(
-    (index: number) => {
-      return {
-        borderRadius: getBorderRadius(index, links),
-        x: `${index * 100}%`,
-      };
+  const headers = [
+    {
+      title: "Home",
+      icon: <HomeIcon className="h-6 w-6" />,
+      onClick: (index: number) => setIndex(index),
     },
-    [links]
-  );
-
-  const handleActiveChange = useCallback(() => {
-    // The animation will be handled by motion values in the JSX
-  }, []);
-
-  useEffect(() => {
-    handleActiveChange();
-  }, [activeIndex, handleActiveChange]);
-
+    {
+      title: "Blogs",
+      icon: <BookOpenIcon className="h-6 w-6" />,
+      onClick: (index: number) => setIndex(index),
+    },
+    {
+      title: "Works",
+      icon: <BriefcaseIcon className="h-6 w-6" />,
+      onClick: (index: number) => setIndex(index),
+    },
+  ];
   return (
-    <motion.div
-      animate={{
-        backgroundPositionX: `${
-          ((links.length - activeIndex) / links.length) * 100
-        }%`,
-      }}
-      transition={headerConfig}
-      className={cn(
-        "pb-[1px] relative overflow-hidden w-fit h-fit rounded-full m-auto",
-        "bg-[linear-gradient(to_left,_rgb(51,_51,_51,_0.5)_20%,_rgb(255,_255,_255,_0.5)_44%,_rgb(153,_153,_153,_0.5)_50%,_rgb(68,_68,_68,_0.5)_60%,_rgb(51,_51,_51,_0.5)_63%,_rgb(255,_255,_255,_0.5)_100%)]",
-        "bg-[200%_auto]",
-        "z-10"
-      )}
-    >
-      <div className="flex border-[0.5px] bg-black border-neutral-600 rounded-full border-b-0 p-1 overflow-hidden bg-opacity-90">
-        {links.map(({ onClick, title, icon }, index) => {
-          return (
-            <button
-              key={title}
-              onClick={() => {
-                onClick(index);
-              }}
-              className={cn(
-                "m-1 sm:m-2 text-sm relative sm:min-w-[70px] min-w-[40px] font-normal flex justify-center",
-                "rounded-full",
-                activeIndex === index
-                  ? "text-white drop-shadow-[rgb(255_255_255_/_57%)_1px_1px_12px]"
-                  : "text-neutral-400 hover:text-white transition-colors duration-250"
-              )}
-            >
-              <p className="sm:block hidden">{title}</p>
-              <div className="sm:hidden flex items-center justify-center pointer-events-none">
-                {icon}
-              </div>
-            </button>
-          );
-        })}
-        <motion.div
-          className="absolute left-0 top-0 w-12 sm:w-[86px] px-3 h-4/5 m-1 bg-gradient-to-b from-white/20 to-white/5"
-          animate={pillCoordinates(activeIndex)}
-          transition={headerConfig}
-        />
-        <motion.div
-          className="absolute h-8 w-12 sm:w-[86px] opacity-40 -bottom-2 rounded-full bg-gradient-to-t from-white/60 to-transparent blur-lg"
-          animate={pillCoordinates(activeIndex)}
-          transition={headerConfig}
-        >
-          <div className="absolute h-2 w-full sm:w-[86px] top-1 rounded-full bg-gradient-to-r from-transparent via-white/80 to-transparent" />
-        </motion.div>
-      </div>
-    </motion.div>
+    <div className="w-full flex justify-center absolute z-10 top-10">
+      <Header links={headers} activeIndex={index} />
+    </div>
   );
 };
-
-export default Header;

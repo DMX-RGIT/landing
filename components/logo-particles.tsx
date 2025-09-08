@@ -3,32 +3,14 @@
 import { useRef, useEffect, useState } from "react";
 import { DMX_PATH } from "@/aws-logo-path";
 import { BookOpenIcon, BriefcaseIcon, HomeIcon } from "lucide-react";
-import Header from "./navbar";
+import Header from "./ui/header";
+import { NavBar } from "./navbar";
 
 export default function Component() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const isTouchingRef = useRef(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [index, setIndex] = useState(0);
-
-  const headers = [
-    {
-      title: "Home",
-      icon: <HomeIcon className="h-6 w-6" />,
-      onClick: (index: number) => setIndex(index),
-    },
-    {
-      title: "Blogs",
-      icon: <BookOpenIcon className="h-6 w-6" />,
-      onClick: (index: number) => setIndex(index),
-    },
-    {
-      title: "Works",
-      icon: <BriefcaseIcon className="h-6 w-6" />,
-      onClick: (index: number) => setIndex(index),
-    },
-  ];
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -249,9 +231,7 @@ export default function Component() {
 
   return (
     <div className="relative w-full h-dvh flex flex-col items-center justify-center">
-      <div className=" absolute z-10 top-10">
-        <Header links={headers} activeIndex={index} />
-      </div>
+      <NavBar />
       <video
         className="absolute top-0 left-0 w-full h-full object-cover z-0"
         src="/gradient.mp4"

@@ -306,12 +306,17 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
     isMobile = false,
     className = "",
     // Camera distance controls - UPDATED FOR FARTHER VIEW
-    cameraDistance = 300, // Increased from 150
+    cameraDistance = 550, // Increased from 150
     minDistance = 100, // Increased from 50
     maxDistance = 800, // Increased from 400
   }) => {
     const modelGroupRef = useRef<THREE.Group | null>(null);
-
+    const isSmallScreen =
+      typeof window !== "undefined" && window.innerWidth < 768;
+    const camDistance = isSmallScreen ? cameraDistance * 2.8 : cameraDistance;
+    const devicePosition: [x: number, y: number, z: number] = isSmallScreen
+      ? [-450, -150, camDistance]
+      : [-230, -55, camDistance];
     // Use default aspect ratio for SSR, update on client
     const cameraRef = useRef(
       new THREE.PerspectiveCamera(
@@ -398,7 +403,7 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
         <Canvas
           shadows
           camera={{
-            position: [0, 0, cameraDistance], // Use configurable distance
+            position: devicePosition,
             fov: 50,
             near: 1,
             far: 2000, // Increased far plane
@@ -428,10 +433,11 @@ export const ModelPreview = React.memo<ModelPreviewProps>(
             left: 0,
             right: 0,
             bottom: 0,
+            backgroundColor: backgroundColor,
           }}
         >
           <Suspense fallback={null}>
-            <color attach="background" args={[backgroundColor]} />
+            {/* <color attach="background" args={[backgroundColor]} /> */}
 
             <ambientLight intensity={0.7 * Math.PI} />
 
